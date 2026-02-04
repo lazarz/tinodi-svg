@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import SvgCanvas from "./SvgCanvas.jsx";
+import ZoomPanSvg from "./ZoomPanSvg.jsx";
 
 function App() {
     const [elements, setElements] = useState([]); // Stores all shapes
@@ -36,7 +37,7 @@ function App() {
         }
     };
 
-    return (<SvgCanvas></SvgCanvas>
+    return (<ZoomPanSvg></ZoomPanSvg>
     )
 }
 
