@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
-import SvgCanvas from "./SvgCanvas.jsx";
+import  { useState, useRef } from 'react';
+// import SvgCanvas from "./SvgCanvas.jsx";
 import ZoomPanSvg from "./ZoomPanSvg.jsx";
+import mySong from './assets/example.mp3'; // Import súboru
+import TimedAudioPlayer, { AudioEvent } from "./TimedAudioPlayer.tsx";
 
 function App() {
     const [elements, setElements] = useState([]); // Stores all shapes
@@ -8,7 +10,7 @@ function App() {
     const svgRef = useRef(null);
 
     // Helper to get coordinates relative to the SVG element
-    const getCoords = (e) => {
+    const getCoords = (e: { clientX: number; clientY: number; }) => {
         const svg = svgRef.current;
         const CTM = svg.getScreenCTM();
         return {
@@ -36,8 +38,34 @@ function App() {
             setCurrentPath(null);
         }
     };
-
-    return (<ZoomPanSvg></ZoomPanSvg>
+    const [activeNote, setActiveNote] = useState(null);
+    const myEvents: AudioEvent[] = [
+        {
+            id: 'nota1',
+            time: 5,
+            action: () => {
+                console.log('5')
+                setActiveNote('Prvá nota!')
+            }
+        },
+        {
+            id: 'nota2',
+            time: 10,
+            action: () => {
+                console.log('10')
+                setActiveNote('Druhá nota!')
+            }
+        },
+        {
+            id: 'nota3',
+            time: 15,
+            action: () => {
+                console.log('15')
+                setActiveNote('Druhá nota!')
+            }
+        },
+    ];
+    return (<TimedAudioPlayer src={mySong} events={myEvents}></TimedAudioPlayer>
     )
 }
 
