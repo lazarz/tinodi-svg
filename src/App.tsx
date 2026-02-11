@@ -1,8 +1,8 @@
-import  { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 // import SvgCanvas from "./SvgCanvas.jsx";
-import ZoomPanSvg from "./ZoomPanSvg.jsx";
 import mySong from './assets/example.mp3'; // Import súboru
 import TimedAudioPlayer, { AudioEvent } from "./TimedAudioPlayer.tsx";
+import SvgCanvas from "./SvgCanvas.tsx";
 
 function App() {
     const [elements, setElements] = useState([]); // Stores all shapes
@@ -65,7 +65,11 @@ function App() {
             }
         },
     ];
-    return (<TimedAudioPlayer src={mySong} events={myEvents}></TimedAudioPlayer>
+    return (
+        <div>
+            <SvgCanvas ></SvgCanvas>
+            <TimedAudioPlayer src={mySong} events={myEvents}></TimedAudioPlayer>
+        </div>
     )
 }
 
