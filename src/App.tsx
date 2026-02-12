@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 // import SvgCanvas from "./SvgCanvas.jsx";
-import mySong from './assets/example.mp3'; // Import súboru
+import mySong from './assets/Potta.m4a'; // Import súboru
 import TimedAudioPlayer, { AudioEvent } from "./TimedAudioPlayer.tsx";
 import SvgCanvas from "./SvgCanvas.tsx";
 
@@ -65,12 +65,22 @@ function App() {
             }
         },
     ];
+    const [notes, setNotes] = useState<Note[]>([]);
     return (
         <div>
-            <SvgCanvas ></SvgCanvas>
-            <TimedAudioPlayer src={mySong} events={myEvents}></TimedAudioPlayer>
+            <SvgCanvas notes={notes} setNotes={setNotes}></SvgCanvas>
+            <TimedAudioPlayer setNotes={setNotes} notes={notes} src={mySong} events={myEvents}></TimedAudioPlayer>
         </div>
     )
+}
+
+export interface Note {
+    id: number;
+    x: number;
+    y: number;
+    type: 'quarter' | 'half' | 'whole';
+    tone: string;
+    time: number;
 }
 
 export default App;

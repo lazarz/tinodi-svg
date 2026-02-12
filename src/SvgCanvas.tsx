@@ -1,22 +1,21 @@
 import React, { useRef, useState } from 'react';
+import { AudioEvent } from "./TimedAudioPlayer.tsx";
+import { Note } from "./App.tsx";
 
-interface Note {
-    id: number;
-    x: number;
-    y: number;
-    type: 'quarter' | 'half' | 'whole';
+interface SvgCanvasProps {
+    notes: Note[];
+    setNotes:(x:Note[])=>void;
 }
 
-const SvgCanvas = () => {
+const SvgCanvas = ({ notes, setNotes }: SvgCanvasProps) => {
     const [paths, setPaths] = useState([]);
-    const [notes, setNotes] = useState<Note[]>([]);
     const [isDrawing, setIsDrawing] = useState(false);
     const [mode, setMode] = useState<'draw' | 'note'>('draw');
     const svgRef = useRef(null);
-    const svgPaddingTop = 50;
+    const svgPaddingTop = 20;
     // 1. Define your internal coordinate system (ViewBox)
     const VB_WIDTH = 1000;
-    const VB_HEIGHT = 200;
+    const VB_HEIGHT = 100;
 
     const getRelativeCoords = (e) => {
         const svg = svgRef.current;
@@ -47,8 +46,8 @@ const SvgCanvas = () => {
             };
             setNotes([...notes, newNote]);
         } else {
-            const newPath = { d: `M ${x} ${y}`, id: Date.now() };
-            setPaths([...paths, newPath]);
+            // const newPath = { d: `M ${x} ${y}`, id: Date.now() };
+            // setPaths([...paths, newPath]);
             setIsDrawing(true);
         }
     };
@@ -72,6 +71,7 @@ const SvgCanvas = () => {
         return (
             <g key={note.id}>
                 {/* Note head (ellipse for quarter/half notes, circle for whole notes) */}
+                <text x={note.x - 10} y={95} fill="black">{note.tone}</text>
                 <ellipse
                     cx={note.x}
                     cy={note.y}
@@ -111,31 +111,31 @@ const SvgCanvas = () => {
     return (
         <div>
             <div style={{ marginBottom: '10px' }}>
-                <button
-                    onClick={() => setMode('draw')}
-                    style={{
-                        padding: '8px 16px',
-                        marginRight: '8px',
-                        background: mode === 'draw' ? '#4CAF50' : '#ddd',
-                        border: 'none',
-                        cursor: 'pointer',
-                        borderRadius: '4px'
-                    }}
-                >
-                    Draw Mode
-                </button>
-                <button
-                    onClick={() => setMode('note')}
-                    style={{
-                        padding: '8px 16px',
-                        background: mode === 'note' ? '#4CAF50' : '#ddd',
-                        border: 'none',
-                        cursor: 'pointer',
-                        borderRadius: '4px'
-                    }}
-                >
-                    Note Mode
-                </button>
+                {/*<button*/}
+                {/*    onClick={() => setMode('draw')}*/}
+                {/*    style={{*/}
+                {/*        padding: '8px 16px',*/}
+                {/*        marginRight: '8px',*/}
+                {/*        background: mode === 'draw' ? '#4CAF50' : '#ddd',*/}
+                {/*        border: 'none',*/}
+                {/*        cursor: 'pointer',*/}
+                {/*        borderRadius: '4px'*/}
+                {/*    }}*/}
+                {/*>*/}
+                {/*    Draw Mode*/}
+                {/*</button>*/}
+                {/*<button*/}
+                {/*    onClick={() => setMode('note')}*/}
+                {/*    style={{*/}
+                {/*        padding: '8px 16px',*/}
+                {/*        background: mode === 'note' ? '#4CAF50' : '#ddd',*/}
+                {/*        border: 'none',*/}
+                {/*        cursor: 'pointer',*/}
+                {/*        borderRadius: '4px'*/}
+                {/*    }}*/}
+                {/*>*/}
+                {/*    Note Mode*/}
+                {/*</button>*/}
                 <button
                     onClick={() => setNotes([])}
                     style={{
@@ -148,10 +148,10 @@ const SvgCanvas = () => {
                         borderRadius: '4px'
                     }}
                 >
-                    Clear Notes
+                    Törlés
                 </button>
             </div>
-            <svg ref={svgRef} enableBackground={'new 0 0 1000 200'}
+            <svg ref={svgRef} enableBackground={'new 0 0 1000 100'}
                 // VIEWPORT: How big it looks on screen (can be % or px)
                  viewTarget={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`}
                 // VIEWBOX: The internal logical dimensions [min-x min-y width height]

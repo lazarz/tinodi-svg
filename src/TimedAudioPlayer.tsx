@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import * as Tone from 'tone';
+import { Note } from "./App.tsx";
 
 export interface AudioEvent {
     time: number; // Time in seconds
@@ -10,9 +10,11 @@ export interface AudioEvent {
 interface AudioPlayerProps {
     src: string;
     events: AudioEvent[];
+    setNotes: (x: Note[]) => void;
+    notes: Note[];
 }
 
-const TimedAudioPlayer = ({ src, events }: AudioPlayerProps) => {
+const TimedAudioPlayer = ({ src, events, notes, setNotes }: AudioPlayerProps) => {
     const audioRef = useRef<HTMLAudioElement>(null);
     const [triggeredEvents, setTriggeredEvents] = useState<Set<string>>(new Set());
     const [isRecording, setIsRecording] = useState(false);
@@ -53,6 +55,9 @@ const TimedAudioPlayer = ({ src, events }: AudioPlayerProps) => {
         mediaRecorderRef.current.start();
         setIsRecording(true);
     };
+
+
+    const tones = ["C1", "D1", "E1", "F1", "G1", "A1", "H1", "C2", "D2", "E2", "F2", "G2", "A2", "H2"];
 
     const stopRecording = () => {
         mediaRecorderRef.current.stop();
@@ -150,162 +155,175 @@ const TimedAudioPlayer = ({ src, events }: AudioPlayerProps) => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    const handleUserClick = () => {
+    const handleUserClick = (tone: string) => {
         // audioRef.current.currentTime nám povie presný čas v sekundách
         const timestamp = audioRef.current.currentTime;
         console.log("Používateľ klikol v čase:", timestamp);
+        const actualPosition = (1000 / audioRef.current.duration) * timestamp;
+        let y = tones.indexOf(tone);
+        const newNote: Note = {
+            tone: tone,
+            id: Date.now(),
+            x: actualPosition,
+            y: 100 - y * 5 - 30,
+            type: 'quarter',
+            time: timestamp
+        };
 
-        // Tu môžeš uložiť čas k danej note/objektu
-        console.log('time', timestamp);
+        setNotes([...notes, newNote]);
     };
 
-    const playTone = (freq = 440, duration = 0.5) => {
-        // 1. Vytvorenie audio kontextu (mozog operácie)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // 2. Vytvorenie oscilátora (zdroj zvuku)
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain(); // Ovládač hlasitosti
+    // const playTone = (freq = 440, duration = 0.5) => {
+    //     // 1. Vytvorenie audio kontextu (mozog operácie)
+    //     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    //
+    //     // 2. Vytvorenie oscilátora (zdroj zvuku)
+    //     const oscillator = audioCtx.createOscillator();
+    //     const gainNode = audioCtx.createGain(); // Ovládač hlasitosti
+    //
+    //     oscillator.type = 'sine'; // Typ vlny: 'sine', 'square', 'sawtooth', 'triangle'
+    //     oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime); // Frekvencia v Hz (440 = komorné A)
+    //
+    //     // 3. Nastavenie "Fade out" efektu, aby zvuk nepraskal
+    //     gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    //     gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    //
+    //     oscillator.connect(gainNode);
+    //     gainNode.connect(audioCtx.destination);
+    //
+    //     // 4. Štart a stop
+    //     oscillator.start();
+    //     oscillator.stop(audioCtx.currentTime + duration);
+    // };
 
-        oscillator.type = 'sine'; // Typ vlny: 'sine', 'square', 'sawtooth', 'triangle'
-        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime); // Frekvencia v Hz (440 = komorné A)
-
-        // 3. Nastavenie "Fade out" efektu, aby zvuk nepraskal
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        // 4. Štart a stop
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + duration);
-    };
-
-    const playNoteTone = async (note) => {
-        // Tone.js potrebuje interakciu používateľa na spustenie audio kontextu
-        await Tone.start();
-// DuoSynth - bohatý zvuk vhodný pre sólové husľové party
-        const synth = new Tone.AMSynth().toDestination();
-        synth.triggerAttackRelease(note, "0.2s"); // Zahrá notu (napr. "C4") v dĺžke osminovej noty
-    };
+//     const playNoteTone = async (note) => {
+//         // Tone.js potrebuje interakciu používateľa na spustenie audio kontextu
+//         await Tone.start();
+// // DuoSynth - bohatý zvuk vhodný pre sólové husľové party
+//         const synth = new Tone.AMSynth().toDestination();
+//         synth.triggerAttackRelease(note, "0.2s"); // Zahrá notu (napr. "C4") v dĺžke osminovej noty
+//     };
 
     return (
-        <div style={styles.container}>
-            <audio
-                ref={audioRef}
-                src={src}
-                onTimeUpdate={handleTimeUpdate}
-                onPlay={handlePlay}
-                onPause={handlePause}
-                onLoadedMetadata={handleLoadedMetadata}
-                style={{ display: 'none' }}
+        <div>
+            <input
+                type="range"
+                min="0"
+                max={duration || 0}
+                value={currentTime}
+                onChange={handleSeek}
+                style={styles.progressBar}
             />
-
-            {/* Custom Audio Controls */}
-            <div style={styles.controlsContainer}>
-                <h3 style={styles.title}>Audio Player</h3>
-
-                {/* Progress Bar */}
-                <div style={styles.progressContainer}>
-                    <span style={styles.timeDisplay}>{formatTime(currentTime)}</span>
-                    <input
-                        type="range"
-                        min="0"
-                        max={duration || 0}
-                        value={currentTime}
-                        onChange={handleSeek}
-                        style={styles.progressBar}
-                    />
-                    <span style={styles.timeDisplay}>{formatTime(duration)}</span>
-                </div>
-
-                {/* Main Controls */}
-                <div style={styles.mainControls}>
-                    <button onClick={() => skipTime(-10)} style={styles.controlButton} title="Skip -10s">
-                        ⏪
-                    </button>
-                    <button onClick={() => skipTime(-5)} style={styles.controlButton} title="Skip -5s">
-                        ⏮
-                    </button>
-                    <button onClick={togglePlayPause} style={styles.playButton}>
-                        {isPlaying ? '⏸' : '▶'}
-                    </button>
-                    <button onClick={() => skipTime(5)} style={styles.controlButton} title="Skip +5s">
-                        ⏭
-                    </button>
-                    <button onClick={() => skipTime(10)} style={styles.controlButton} title="Skip +10s">
-                        ⏩
-                    </button>
-                    <button 
-                        onClick={toggleLoop} 
-                        style={{...styles.controlButton, ...(loop ? styles.activeButton : {})}}
-                        title="Loop"
-                    >
-                        🔁
-                    </button>
-                </div>
-
-                {/* Volume Control */}
-                <div style={styles.volumeContainer}>
-                    <span style={styles.label}>🔊 Volume:</span>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        style={styles.slider}
-                    />
-                    <span style={styles.valueDisplay}>{Math.round(volume * 100)}%</span>
-                </div>
-
-                {/* Playback Speed */}
-                <div style={styles.speedContainer}>
-                    <span style={styles.label}>⚡ Speed:</span>
-                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
-                        <button
-                            key={speed}
-                            onClick={() => handleSpeedChange(speed)}
-                            style={{
-                                ...styles.speedButton,
-                                ...(playbackSpeed === speed ? styles.activeSpeedButton : {})
-                            }}
-                        >
-                            {speed}x
-                        </button>
-                    ))}
-                </div>
-
-                <div style={styles.infoText}>
-                    Events registered: {events.length}
-                </div>
+            <div style={styles.container}>
+                <audio
+                    ref={audioRef}
+                    src={src}
+                    onTimeUpdate={handleTimeUpdate}
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    style={{ display: 'none' }}
+                />
             </div>
+
+            {/* Progress Bar */}
+            {/*<div style={styles.progressContainer}>*/}
+            {/*    <span style={styles.timeDisplay}>{formatTime(currentTime)}</span>*/}
+            {/*    <span style={styles.timeDisplay}>{formatTime(duration)}</span>*/}
+            {/*</div>*/}
+
+            {/* Main Controls */}
+            {/*<div style={styles.mainControls}>*/}
+            {/*    <button onClick={() => skipTime(-10)} style={styles.controlButton} title="Skip -10s">*/}
+            {/*        ⏪*/}
+            {/*    </button>*/}
+            {/*    <button onClick={() => skipTime(-5)} style={styles.controlButton} title="Skip -5s">*/}
+            {/*        ⏮*/}
+            {/*    </button>*/}
+
+            <button onClick={togglePlayPause}>
+                {isPlaying ? '⏸' : '▶'}
+            </button>
+            {/*    <button onClick={() => skipTime(5)} style={styles.controlButton} title="Skip +5s">*/}
+            {/*        ⏭*/}
+            {/*    </button>*/}
+            {/*    <button onClick={() => skipTime(10)} style={styles.controlButton} title="Skip +10s">*/}
+            {/*        ⏩*/}
+            {/*    </button>*/}
+            {/*    <button */}
+            {/*        onClick={toggleLoop} */}
+            {/*        style={{...styles.controlButton, ...(loop ? styles.activeButton : {})}}*/}
+            {/*        title="Loop"*/}
+            {/*    >*/}
+            {/*        🔁*/}
+            {/*    </button>*/}
+            {/*</div>*/}
+
+            {/* Volume Control */}
+            {/*<div style={styles.volumeContainer}>*/}
+            {/*    <span style={styles.label}>🔊 Volume:</span>*/}
+            {/*    <input*/}
+            {/*        type="range"*/}
+            {/*        min="0"*/}
+            {/*        max="1"*/}
+            {/*        step="0.01"*/}
+            {/*        value={volume}*/}
+            {/*        onChange={handleVolumeChange}*/}
+            {/*        style={styles.slider}*/}
+            {/*    />*/}
+            {/*    <span style={styles.valueDisplay}>{Math.round(volume * 100)}%</span>*/}
+            {/*</div>*/}
+
+            {/* Playback Speed */}
+            {/*    <div style={styles.speedContainer}>*/}
+            {/*        <span style={styles.label}>⚡ Speed:</span>*/}
+            {/*        {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (*/}
+            {/*            <button*/}
+            {/*                key={speed}*/}
+            {/*                onClick={() => handleSpeedChange(speed)}*/}
+            {/*                style={{*/}
+            {/*                    ...styles.speedButton,*/}
+            {/*                    ...(playbackSpeed === speed ? styles.activeSpeedButton : {})*/}
+            {/*                }}*/}
+            {/*            >*/}
+            {/*                {speed}x*/}
+            {/*            </button>*/}
+            {/*        ))}*/}
+            {/*    </div>*/}
+
+            {/*    <div style={styles.infoText}>*/}
+            {/*        Events registered: {events.length}*/}
+            {/*    </div>*/}
+            {/*</div>*/}
 
             {/* Recording Section */}
-            {false && <div style={styles.recordingSection}>
-                <h3 style={styles.subtitle}>Audio Rekordér</h3>
-                {!isRecording ? (
-                    <button onClick={startRecording} style={styles.recordButton}>🔴 Spustiť nahrávanie</button>
-                ) : (
-                    <button onClick={stopRecording} style={styles.stopButton}>⏹ Zastaviť nahrávanie</button>
-                )}
+            {/*{false && <div style={styles.recordingSection}>*/}
+            {/*    <h3 style={styles.subtitle}>Audio Rekordér</h3>*/}
+            {/*    {!isRecording ? (*/}
+            {/*        <button onClick={startRecording} style={styles.recordButton}>🔴 Spustiť nahrávanie</button>*/}
+            {/*    ) : (*/}
+            {/*        <button onClick={stopRecording} style={styles.stopButton}>⏹ Zastaviť nahrávanie</button>*/}
+            {/*    )}*/}
 
-                {audioURL && (
-                    <div style={styles.recordingResult}>
-                        <h4 style={styles.subtitle}>Nahrávka:</h4>
-                        <audio src={audioURL} controls style={styles.recordedAudio}/>
-                        <br/>
-                        <a href={audioURL} download="nahravka.mp3" style={styles.downloadLink}>Stiahnuť súbor</a>
-                    </div>
-                )}
-            </div>
-            }
+            {/*    {audioURL && (*/}
+            {/*        <div style={styles.recordingResult}>*/}
+            {/*            <h4 style={styles.subtitle}>Nahrávka:</h4>*/}
+            {/*            <audio src={audioURL} controls style={styles.recordedAudio}/>*/}
+            {/*            <br/>*/}
+            {/*            <a href={audioURL} download="nahravka.mp3" style={styles.downloadLink}>Stiahnuť súbor</a>*/}
+            {/*        </div>*/}
+            {/*    )}*/}
+            {/*</div>*/}
+            {/*}*/}
 
             {/* Additional Controls */}
             <div style={styles.additionalControls}>
-                <button onClick={handleUserClick} style={styles.utilButton}>⏱ Zaznamenaj čas</button>
+                {tones.map((tone) => (
+                    <button key={tone} onClick={() => handleUserClick(tone)} style={styles.utilButton}>
+                        {tone}
+                    </button>
+                ))}
                 <button onClick={() => playNoteTone("C7")} style={styles.utilButton}>🎵 Zahraj C7</button>
             </div>
         </div>
@@ -315,9 +333,9 @@ const TimedAudioPlayer = ({ src, events }: AudioPlayerProps) => {
 const styles: { [key: string]: React.CSSProperties } = {
     container: {
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        maxWidth: '1000px',
+        minWidth: '1000px',
         margin: '0 auto',
-        padding: '20px',
+        padding: '0px',
         color: '#383',
     },
     controlsContainer: {
@@ -352,6 +370,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         outline: 'none',
         cursor: 'pointer',
         background: 'rgba(255, 255, 255, 0.3)',
+        minWidth: '1200px'
     },
     timeDisplay: {
         fontSize: '14px',
